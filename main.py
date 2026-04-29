@@ -127,3 +127,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    #git commit -m "Build vulnerability scanner pipeline: integrated SQL, XSS, directory, header and port scanners with centralized reporting"
