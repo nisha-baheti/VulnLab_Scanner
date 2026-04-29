@@ -27,8 +27,8 @@ def login():
     query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"
     print("Executing Query:", query)
 
-    # Simulating SQL behavior
-    if "'" in username or "'" in password:
+    # Simulate SQL injection vulnerability
+    if "or" in username.lower() or "or" in password.lower():
         return "SQL Error: You have an error in your SQL syntax"
 
     if username in users and users[username] == password:
