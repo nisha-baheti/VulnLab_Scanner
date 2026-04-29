@@ -24,7 +24,6 @@ def login():
     username = request.args.get("username")
     password = request.args.get("password")
 
-    # ❌ INTENTIONALLY VULNERABLE (simulating SQL query)
     query = f"SELECT * FROM users WHERE username='{username}' AND password='{password}'"
     print("Executing Query:", query)
 
@@ -36,6 +35,7 @@ def login():
         return "Login Successful!"
     else:
         return "Invalid Credentials"
+
 
 if __name__ == "__main__":
     app.run(debug=True)
