@@ -106,42 +106,16 @@ def test_url_parameters(url):
 
     return findings
 
-
-def format_result(url, findings):
-    """Format final output"""
-
-    # Remove duplicates (same URL + payload)
-    unique = {(f["url"], f["payload"]): f for f in findings}.values()
-
-    high = len(unique)
-
-    return {
-        "type": "Cross-Site Scripting (XSS)",
-        "target": url,
-        "status": "Vulnerable" if unique else "Safe",
-        "vulnerability": True if unique else False,
-        "total_issues": len(unique),
-        "severity_summary": {
-            "High": high,
-            "Medium": 0,
-            "Low": 0
-        },
-        "issues": list(unique)
-    }
-
-
 def scan_xss(url):
-    """Main function"""
     html = fetch_page(url)
 
+    # 🔴 Handle fetch error
     if isinstance(html, dict) and "error" in html:
-        return {
-            "type": "Cross-Site Scripting (XSS)",
-            "target": url,
-            "status": "Error",
-            "vulnerability": False,
-            "message": html["error"]
-        }
+        return [{
+            "type": "XSS Scan Error",
+            "description": html["error"],
+            "severity": "Critical"
+        }]
 
     forms = extract_forms(html, url)
     form_findings = test_forms(forms)
@@ -149,22 +123,11 @@ def scan_xss(url):
 
     all_findings = form_findings + param_findings
 
-    return format_result(url, all_findings)
+    # ✅ Remove duplicates (url + payload)
+    unique = {}
+    for f in all_findings:
+        key = (f.get("url"), f.get("payload"))
+        if key not in unique:
+            unique[key] = f
 
-
-# 🔹 Local test
-if __name__ == "__main__":
-    target = input("Enter target URL: ")
-    result = scan_xss(target)
-
-    print("\n=== Scan Result ===")
-    print(f"Target: {result['target']}")
-    print(f"Status: {result['status']}")
-    print(f"Total Issues: {result.get('total_issues', 0)}\n")
-
-    if result.get("issues"):
-        for issue in result["issues"]:
-            print(f"[!] {issue['type']}")
-            print(f"    URL: {issue['url']}")
-            print(f"    Payload: {issue['payload']}")
-            print(f"    Severity: {issue['severity']}\n")
+    return list(unique.values())

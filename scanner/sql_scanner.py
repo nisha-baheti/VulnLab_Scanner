@@ -1,7 +1,6 @@
 import requests
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 
-# Payloads
 payloads = [
     "' OR '1'='1",
     "' OR 1=1 --",
@@ -12,22 +11,22 @@ def get_response(url):
     try:
         return requests.get(url, timeout=5).text
     except:
-        return ""
+        return None   # better than ""
 
 def inject_payload(url, param, payload):
     parsed = urlparse(url)
     params = parse_qs(parsed.query)
 
-    # inject into specific parameter
-    params[param] = params[param][0] + payload
+    # safe handling
+    original_value = params.get(param, [""])[0]
+    params[param] = original_value + payload
 
     new_query = urlencode(params, doseq=True)
-    new_url = urlunparse(parsed._replace(query=new_query))
+    return urlunparse(parsed._replace(query=new_query))
 
-    return new_url
 
 def scan_sql_injection(url):
-    print(f"\n[+] Scanning: {url}\n")
+    results = []
 
     sql_errors = [
         "sql syntax",
@@ -39,45 +38,56 @@ def scan_sql_injection(url):
     parsed = urlparse(url)
     params = parse_qs(parsed.query)
 
-    found = False
+    if not params:
+        return [{
+            "type": "SQL Injection",
+            "message": "No parameters found in URL",
+            "severity": "Info"
+        }]
+
     original_response = get_response(url)
 
-    for param in params:
-        print(f"\n[*] Testing parameter: {param}")
+    if original_response is None:
+        return [{
+            "type": "Scan Error",
+            "message": "Target not reachable",
+            "severity": "Critical"
+        }]
 
+    seen = set()  
+
+    for param in params:
         for payload in payloads:
             test_url = inject_payload(url, param, payload)
-            print(f"    → Payload: {payload}")
-
             injected_response = get_response(test_url)
 
-        # Error-based detection
+            if injected_response is None:
+                continue
+
+            # 🔴 Error-based detection (HIGH confidence)
             for error in sql_errors:
                 if error in injected_response.lower():
-                    print(f"\n[VULNERABLE] SQL Injection detected via error!")
-                    print(f"[PARAMETER] {param}")
-                    print(f"[PAYLOAD] {payload}")
-                    found = True
+                    key = (param, payload, "error")
+                    if key not in seen:
+                        results.append({
+                            "type": "SQL Injection",
+                            "parameter": param,
+                            "payload": payload,
+                            "severity": "High"
+                        })
+                        seen.add(key)
                     break
 
-            if found:
-                break
-            
-        # Response difference detection
+            # 🟡 Response difference (LOW confidence)
             if injected_response != original_response:
-                print(f"\n[POSSIBLE VULNERABILITY] Response changed!")
-                print(f"[PARAMETER] {param}")
-                print(f"[PAYLOAD] {payload}")
-                found = True
+                key = (param, payload, "diff")
+                if key not in seen:
+                    results.append({
+                        "type": "SQL Injection (Possible)",
+                        "parameter": param,
+                        "payload": payload,
+                        "severity": "Medium"
+                    })
+                    seen.add(key)
 
-    # continue scanning other params
-        if found:
-            continue
-
-    if not found:
-        print("\n[SAFE] No SQL Injection detected") 
-
-
-if __name__ == "__main__":
-    target = input("Enter URL (with parameters): ")
-    scan_sql_injection(target)
+    return results

@@ -48,45 +48,47 @@ def check_paths(base_url):
                 })
 
         except Exception as e:
-            print(f"Error accessing {url}: {e}")
             continue
 
     return findings  
 
 
-def format_result(base_url, findings):
-    """Prepare final structured output"""
+#def format_result(base_url, findings):
+#     """Prepare final structured output"""
 
-    # 🔹 Severity summary
-    high = sum(1 for f in findings if f["severity"] == "High")
-    medium = sum(1 for f in findings if f["severity"] == "Medium")
-    low = sum(1 for f in findings if f["severity"] == "Low")
+#     # 🔹 Severity summary
+#     high = sum(1 for f in findings if f["severity"] == "High")
+#     medium = sum(1 for f in findings if f["severity"] == "Medium")
+#     low = sum(1 for f in findings if f["severity"] == "Low")
 
-    return {
-        "type": "Directory / File Exposure",
-        "target": base_url,
-        "status": "Vulnerable" if findings else "Safe",
-        "vulnerability": True if findings else False,
-        "total_issues": len(findings),
-        "severity_summary": {
-            "High": high,
-            "Medium": medium,
-            "Low": low
-        },
-        "issues": findings
-    }
+#     return {
+#         "type": "Directory / File Exposure",
+#         "target": base_url,
+#         "status": "Vulnerable" if findings else "Safe",
+#         "vulnerability": True if findings else False,
+#         "total_issues": len(findings),
+#         "severity_summary": {
+#             "High": high,
+#             "Medium": medium,
+#             "Low": low
+#         },
+#         "issues": findings
+#     }
 
 
 def scan_directories(base_url):
-    """Main function to call from backend"""
     findings = check_paths(base_url)
-    result = format_result(base_url, findings)
 
-    return result
+    results = []
 
+    for f in findings:
+        results.append({
+            "type": "Directory Exposure",
+            "path": f["path"],
+            "url": f["url"],
+            "status_code": f["status_code"],
+            "description": f["description"],
+            "severity": f["severity"]
+        })
 
-# 🔹 For testing locally
-if __name__ == "__main__":
-    test_url = "http://localhost:8000"
-    result = scan_directories(test_url)
-    print(result)
+    return results

@@ -16,28 +16,34 @@ def scan_port(target, port):
         return None
 
 
-def port_scanner(target, ports):
-    print(f"\n[+] Scanning Target: {target}")
-    print(f"[+] Scan started at: {datetime.now()}\n")
+def port_scanner(target, ports=None):
+    if ports is None:
+        ports = [21, 22, 23, 25, 53, 80, 110, 139, 143, 443, 445, 8080]
 
     open_ports = []
 
-    # Thread pool
     with ThreadPoolExecutor(max_workers=50) as executor:
         results = executor.map(lambda port: scan_port(target, port), ports)
 
     for port in results:
         if port:
-            print(f"[OPEN] Port {port}")
             open_ports.append(port)
 
-    print(f"\n[+] Scan completed at: {datetime.now()}")
-    return open_ports
+    # 🔹 Convert to standardized result format
+    findings = []
 
+    for port in open_ports:
+        severity = "Medium"
 
-if __name__ == "__main__":
-    target = input("Enter target (IP or domain): ")
+        # 🔥 Assign higher severity for sensitive ports
+        if port in [21, 22, 23, 445]:
+            severity = "High"
 
-    ports = [21, 22, 23, 25, 53, 80, 110, 139, 143, 443, 445, 8080]
+        findings.append({
+            "type": "Open Port",
+            "port": port,
+            "description": f"Port {port} is open",
+            "severity": severity
+        })
 
-    port_scanner(target, ports)
+    return findings

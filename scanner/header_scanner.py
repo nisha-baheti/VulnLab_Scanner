@@ -56,53 +56,27 @@ def analyze_headers(headers):
 
     return missing
 
-
-def format_result(url, missing_headers):
-    """Prepare final structured output"""
-
-    # 🔹 Handle error case
-    if isinstance(missing_headers, dict) and "error" in missing_headers:
-        return {
-            "type": "Missing Security Headers",
-            "target": url,
-            "status": "Error",
-            "vulnerability": False,
-            "message": missing_headers["error"]
-        }
-
-    # 🔹 Severity summary
-    high = sum(1 for h in missing_headers if h["severity"] == "High")
-    medium = sum(1 for h in missing_headers if h["severity"] == "Medium")
-    low = sum(1 for h in missing_headers if h["severity"] == "Low")
-
-    return {
-        "type": "Missing Security Headers",
-        "category": "Security Misconfiguration",
-        "target": url,
-        "status": "Vulnerable" if missing_headers else "Safe",
-        "vulnerability": True if missing_headers else False,
-        "total_issues": len(missing_headers),
-        "severity_summary": {
-            "High": high,
-            "Medium": medium,
-            "Low": low
-        },
-        "issues": missing_headers
-    }
-
-
 def scan_headers(url):
-    """Main function to call from backend"""
     headers = fetch_headers(url)
     missing_headers = analyze_headers(headers)
-    result = format_result(url, missing_headers)
 
-    return result
+    results = []
 
+    # 🔴 Handle error case
+    if isinstance(missing_headers, dict) and "error" in missing_headers:
+        return [{
+            "type": "Header Scan Error",
+            "description": missing_headers["error"],
+            "severity": "Critical"
+        }]
 
-# 🔹 For testing locally
-if __name__ == "__main__":
-    test_url = "https://example.com/"
-    result = scan_headers(test_url)
-    print(result)    
-#We detect missing security headers as part of security misconfiguration vulnerabilities.
+    # 🔹 Convert each missing header into a finding
+    for h in missing_headers:
+        results.append({
+            "type": "Missing Security Header",
+            "header": h["header"],
+            "description": h["description"],
+            "severity": h["severity"]
+        })
+
+    return results

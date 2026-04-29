@@ -1,0 +1,57 @@
+{
+    "target": "http://example.com",
+    "timestamp": "2026-04-29 15:52:45.534450",
+    "total_findings": 7,
+    "summary": {
+        "High": 3,
+        "Medium": 2,
+        "Low": 1,
+        "Critical": 0,
+        "Info": 1
+    },
+    "findings": [
+        {
+            "type": "SQL Injection",
+            "message": "No parameters found in URL",
+            "severity": "Info"
+        },
+        {
+            "type": "Directory Exposure",
+            "path": "/",
+            "url": "http://example.com/",
+            "status_code": 200,
+            "description": "Root directory listing",
+            "severity": "High"
+        },
+        {
+            "type": "Missing Security Header",
+            "header": "Content-Security-Policy",
+            "description": "Prevents XSS and code injection attacks",
+            "severity": "High"
+        },
+        {
+            "type": "Missing Security Header",
+            "header": "X-Frame-Options",
+            "description": "Prevents clickjacking attacks",
+            "severity": "Medium"
+        },
+        {
+            "type": "Missing Security Header",
+            "header": "Strict-Transport-Security",
+            "description": "Enforces HTTPS connections",
+            "severity": "High"
+        },
+        {
+            "type": "Missing Security Header",
+            "header": "X-Content-Type-Options",
+            "description": "Prevents MIME-type sniffing",
+            "severity": "Medium"
+        },
+        {
+            "type": "Missing Security Header",
+            "header": "Referrer-Policy",
+            "description": "Controls referrer information leakage",
+            "severity": "Low"
+        }
+    ]
+}
