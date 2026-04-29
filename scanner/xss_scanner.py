@@ -154,6 +154,17 @@ def scan_xss(url):
 
 # 🔹 Local test
 if __name__ == "__main__":
-    test_url = "http://localhost:8000"
-    result = scan_xss(test_url)
-    print(result)
+    target = input("Enter target URL: ")
+    result = scan_xss(target)
+
+    print("\n=== Scan Result ===")
+    print(f"Target: {result['target']}")
+    print(f"Status: {result['status']}")
+    print(f"Total Issues: {result.get('total_issues', 0)}\n")
+
+    if result.get("issues"):
+        for issue in result["issues"]:
+            print(f"[!] {issue['type']}")
+            print(f"    URL: {issue['url']}")
+            print(f"    Payload: {issue['payload']}")
+            print(f"    Severity: {issue['severity']}\n")
